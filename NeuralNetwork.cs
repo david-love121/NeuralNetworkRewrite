@@ -84,10 +84,29 @@ namespace NeuralNetworkRewrite2024
             }
             return result;
         }
+        internal Vector<double> GetBiasVector()
+        {
+            Vector<double> result = Vector<double>.Build.Dense(layers.Count);
+            for (int i = 0; i < layers.Count; i++)
+            {
+                result[i] = layers[i].GetBias();
+            }
+            return result;
+        }
+        //This function runs with backward indexing. Because backprop starts from the last layer and moves back,
+        //The 0 index of the list represents the changes to the last set of weights.
         internal void SetWeightsToList(List<Matrix<double>> list)
         {
-
+            int total = list.Count;
+            for (int i = list.Count - 1; i >= 0; i--)
+            {
+                
+                Layer currentLayer = layers[i];
+                Matrix<double> currentMatrix = list[total - i - 1];
+                currentLayer.ChangeWeights(currentMatrix);
+            }
         }
+        
         internal Layer GetLayer(int index)
         {
             return layers[index];

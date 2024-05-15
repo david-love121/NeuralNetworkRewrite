@@ -11,7 +11,9 @@ namespace NeuralNetworkRewrite2024
             Function activationFunction = new LinearFunction(0, 1);
             Driver driver = new Driver(activationFunction);
             List<Matrix<double>> bestWeights = driver.TrainEvolutionBased(100000);
-            driver.TrainBackpropagationBased(100, 100);
+            double scoreEvo = driver.GetAverageScore();
+            driver.TrainBackpropagationBased(3, 10, 0.01);
+            double scoreB = driver.GetAverageScore();
             int x = 2;
 
         }

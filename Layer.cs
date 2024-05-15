@@ -48,6 +48,10 @@ namespace NeuralNetworkRewrite2024
                 neurons[i].RunNeuron(input);
             }
         }
+        internal double GetBias()
+        {
+            return bias;
+        }
         internal int GetSize()
         {
             return size;
@@ -73,7 +77,7 @@ namespace NeuralNetworkRewrite2024
                 this.GetNeuron(i).RandomizeWeights();
             }
         }
-        //Of format [nextNeuronIndex, NeuronIndex]
+        //Of format [NeuronIndex, nextNeuronIndex]
         internal Matrix<double> WeightsAsMatrix()
         {
             if (nextLayer is null)
@@ -81,11 +85,11 @@ namespace NeuralNetworkRewrite2024
                 throw new Exception("You cannot generate a weights matrix for the last layer.");
             }
             Matrix<double> weightsMatrix = Matrix<double>.Build.Dense(nextLayer.GetSize(), size);
-            for (int i = 0; i < nextLayer.GetSize(); i++)
+            for (int i = 0; i < size; i++)
             {
-                for (int k = 0; k < size; k++)
+                for (int k = 0; k < nextLayer.GetSize(); k++)
                 {
-                    weightsMatrix[i, k] = GetNeuron(k).GetConnectorOut(i).GetWeight();
+                    weightsMatrix[i, k] = GetNeuron(i).GetConnectorOut(k).GetWeight();
                 }
             }
             return weightsMatrix;
@@ -100,12 +104,12 @@ namespace NeuralNetworkRewrite2024
             {
                 throw new Exception("No weights to change; last layer");
             }
-            for (int i = 0; i < nextLayer.GetSize(); i++)
+            for (int i = 0; i < size; i++)
             {
-                for (int k = 0; k < size; k++)
+                for (int k = 0; k < nextLayer.GetSize(); k++)
                 {
                     double currentWeight = weights[i, k];
-                    GetNeuron(k).GetConnectorOut(i).SetWeight(currentWeight);
+                    GetNeuron(i).GetConnectorOut(k).SetWeight(currentWeight);
                 }
             }
         }
