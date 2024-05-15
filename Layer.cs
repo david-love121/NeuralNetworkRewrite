@@ -113,6 +113,15 @@ namespace NeuralNetworkRewrite2024
                 }
             }
         }
+        internal void ChangeBias(double bias)
+        {
+            this.bias = bias;
+            //Consider changing neurons to reference their bias from the layer object
+            for (int i = 0; i < neurons.Count; i++)
+            {
+                neurons[i].SetBias(bias);
+            }
+        }
         internal Vector<double> GetPreactivationValues()
         {
             Vector<double> results = Vector<double>.Build.Dense(size);

@@ -93,17 +93,23 @@ namespace NeuralNetworkRewrite2024
             }
             return result;
         }
-        //This function runs with backward indexing. Because backprop starts from the last layer and moves back,
-        //The 0 index of the list represents the changes to the last set of weights.
         internal void SetWeightsToList(List<Matrix<double>> list)
         {
             int total = list.Count;
-            for (int i = list.Count - 1; i >= 0; i--)
+            for (int i = 0; i < total; i++)
             {
                 
                 Layer currentLayer = layers[i];
-                Matrix<double> currentMatrix = list[total - i - 1];
+                Matrix<double> currentMatrix = list[i];
                 currentLayer.ChangeWeights(currentMatrix);
+            }
+        }
+ 
+        internal void SetBiasToList(Vector<double> biases)
+        {
+            for (int i = 0; i < biases.Count; i++)
+            {
+                layers[i].ChangeBias(biases[i]);
             }
         }
         

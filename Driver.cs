@@ -92,8 +92,8 @@ namespace NeuralNetworkRewrite2024
                         //Hard coding sizing for now
                         Vector<double> weightDerivatives = Vector<double>.Build.Dense(2);
                         Vector<double> biasDerivatives = Vector<double>.Build.Dense(3);
-                        int index = layerSizes.Length - 1;
-                        Layer lastLayer = neuralNetwork.GetLayer(index);
+                        int layerIndex = layerSizes.Length - 1;
+                        Layer lastLayer = neuralNetwork.GetLayer(layerIndex);
                         //Vectors of 1 being used for scalability later 
                         Vector<double> expectedOutput = Vector<double>.Build.Dense(1, dataGenerator.GetDataPoint(i));
                         Vector<double> neuralNetworkOutput = neuralNetwork.RunNetwork(i);
@@ -107,24 +107,28 @@ namespace NeuralNetworkRewrite2024
                         Vector<double> delADelZ = Vector<double>.Build.Dense(LastPreactivationValues.Count);
                         for (int k = 0; k < LastPreactivationValues.Count; k++)
                         {
-                            double DelValue = activationFunction.ComputeDerivative(LastPreactivationValues[k]);
+                            //The last layer's del A del Z is the derivative of the mseFunction with the final a values plugged in
+                            double DelValue = mseFunction.ComputeDerivative(LastPreactivationValues[k]);
                             delADelZ[k] = DelValue;
                         }
-                        biasDerivatives[0] = delADelZ[0]; //I believe I need to sum this for the vector representation
-                        index = index - 1;
+                        layerIndex = layerIndex - 1;
 
-                        Layer nextLayer = neuralNetwork.GetLayer(index);
-                        //Derivative of z wrt w
+                        Layer nextLayer = neuralNetwork.GetLayer(layerIndex);
+                        //Summed because changing one a value changes the cost for all neurons
                         double delCDelA = delCDelAVector.Sum();
+                        //Derivative of z wrt w
                         Vector<double> delZDelW = nextLayer.GetActiavtionValues();
                         Vector<double> endChain = delADelZ.Multiply(delCDelA);
                         Vector<double> delCDelW = endChain.PointwiseMultiply(delZDelW);
+                        //The derivative of z wrt b is 1, so this is simply endchain
                         Vector<double> delCDelB = endChain;
-                        //Remember that these vectors begin at 0 index for the last layer
-                        weightDerivatives[0] = delCDelW[0];
-                        biasDerivatives[1] = delCDelB[0];
+                        //Filling from the end because we calculate from the last layer back
+                        int arrayIndex = 0;
+                        weightDerivatives[weightDerivatives.Count - arrayIndex - 1] = delCDelW[0];
+                        biasDerivatives[biasDerivatives.Count - arrayIndex - 1] = delCDelB[0];
+                        arrayIndex++;
                         double delCDelA_1 = endChain.Multiply(nextLayer.GetNeuron(0).GetConnectorOut(0).GetWeight())[0];
-                        Backpropagate(delCDelA_1, index, ref weightDerivatives, ref biasDerivatives);
+                        Backpropagate(delCDelA_1, layerIndex, arrayIndex, ref weightDerivatives, ref biasDerivatives);
                         weightDerivativeCollection.Add(weightDerivatives);
                         biasDerivativeCollection.Add(biasDerivatives);
                     }
@@ -135,13 +139,13 @@ namespace NeuralNetworkRewrite2024
                     biasDerivativesL.Add(averageBiasDerivative);
                 }
                 //TODO: Continue working on normalizing gradients, get L2 Norm and center around that
-                AdjustWeights(learningRate, weightDerivativesL, biasDerivativesL);
+                AdjustNetwork(learningRate, weightDerivativesL, biasDerivativesL);
             }
             
         }
-        internal void Backpropagate(double delCDelA, int index, ref Vector<double> wd, ref Vector<double> bd)
+        internal void Backpropagate(double delCDelA, int layerIndex, int arrayIndex, ref Vector<double> wd, ref Vector<double> bd)
         {
-            Layer lastLayer = neuralNetwork.GetLayer(index);
+            Layer lastLayer = neuralNetwork.GetLayer(layerIndex);
 
             Vector<double> LastPreactivationValues = lastLayer.GetPreactivationValues();
             //Derivative of a wrt z
@@ -151,25 +155,30 @@ namespace NeuralNetworkRewrite2024
                 double DelValue = activationFunction.ComputeDerivative(LastPreactivationValues[k]);
                 delADelZ[k] = DelValue;
             }
-            index = index - 1;
+            layerIndex = layerIndex - 1;
             //Ensure bias derivative gets the end bias value
-            if (index >= 0)
+            if (layerIndex >= 0)
             {
-                Layer nextLayer = neuralNetwork.GetLayer(index);
+                Layer nextLayer = neuralNetwork.GetLayer(layerIndex);
                 //Derivative of z wrt w
                 Vector<double> delZDelW = nextLayer.GetActiavtionValues();
                 Vector<double> endChain = delADelZ.Multiply(delCDelA);
                 Vector<double> delCDelW = endChain.PointwiseMultiply(delZDelW);
                 Vector<double> delCDelB = endChain;
-                wd[wd.Count - index - 1] = delCDelW[0];
-                bd[bd.Count - index - 1] = delCDelB[0];
+                wd[wd.Count - arrayIndex - 1] = delCDelW[0];
+                bd[bd.Count - arrayIndex - 1] = delCDelB[0];
+                arrayIndex++;
                 double delCDelA_1 = endChain.Multiply(nextLayer.GetNeuron(0).GetConnectorOut(0).GetWeight())[0];
 
-                Backpropagate(delCDelA_1, index, ref wd, ref bd);
+                Backpropagate(delCDelA_1, layerIndex, arrayIndex, ref wd, ref bd);
+            } else
+            {
+                Vector<double> endChain = delADelZ.Multiply(delCDelA);
+                bd[bd.Count - arrayIndex - 1] = endChain[0];
             }
         }
         //weightDerivatives and biasDerivatives need to be updated to lists of matrices, but do this once it works with vectors
-        internal void AdjustWeights(double learningRate, List<Vector<double>> weightDerivatives, List<Vector<double>> biasDerivatives)
+        internal void AdjustNetwork(double learningRate, List<Vector<double>> weightDerivatives, List<Vector<double>> biasDerivatives)
         {
             List<Matrix<double>> oldWeights = neuralNetwork.GetWeightsMatrixList();
             //For testing single layer perceptron networks
@@ -191,6 +200,7 @@ namespace NeuralNetworkRewrite2024
             }
             //Getting extreme expansion here, maybe train with smaller batches of examples
             neuralNetwork.SetWeightsToList(oldWeights);
+            neuralNetwork.SetBiasToList(biasVector);
 
         }
         //Returns a vector that has an L2 equal to or below the threshold

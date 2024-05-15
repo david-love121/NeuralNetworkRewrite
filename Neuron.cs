@@ -62,6 +62,10 @@ namespace NeuralNetworkRewrite2024
         {
             return lastValue;
         }
+        internal void SetBias(double bias)
+        {
+            this.bias = bias;
+        }
         internal void RandomizeWeights()
         {
             for (int i = 0; i < dataOut.Count; i++)
