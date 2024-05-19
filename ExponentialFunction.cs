@@ -2,18 +2,21 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace NeuralNetworkRewrite2024
 {
-    internal class ExponentialFunction : Function
+    public class ExponentialFunction : Function
     {
         //y = b^x
-        private double baseValue;
-        internal ExponentialFunction(double baseValue)
+        public double baseValue { get; set; }
+        [JsonConstructor]
+        public ExponentialFunction(double baseValue)
         {
             this.baseValue = baseValue;
         }
+
         internal override double Compute(double x)
         {
             double result = Math.Pow(baseValue, x);
@@ -25,6 +28,10 @@ namespace NeuralNetworkRewrite2024
             double originalValue = Compute(x);
             double derivative = Math.Log(baseValue) * originalValue;
             return derivative;
+        }
+        public override string ToString()
+        {
+            return this.GetType().ToString() + "|" + this.baseValue.ToString();
         }
     }
 }

@@ -70,6 +70,7 @@ namespace NeuralNetworkRewrite2024
                 neuralNetwork.RandomizeWeights();
                 
             }
+
             return bestResult;
         }
         internal void TrainBackpropagationBased(int epochs, int batchSize, double learningRate = 1.0)
@@ -237,6 +238,16 @@ namespace NeuralNetworkRewrite2024
             }
             sum /= vectors.Count;
             return sum;
+        }
+        internal void SaveNetworkToStorage(string path)
+        {
+            neuralNetwork.SaveNetworkToStorage(path);
+        }
+        internal void TestSerialization(string path)
+        {
+            neuralNetwork.SaveNetworkToStorage(path);
+            NeuralNetwork reconstructed = NeuralNetwork.LoadNetworkFromStorage(path);
+            return;
         }
     }
 }

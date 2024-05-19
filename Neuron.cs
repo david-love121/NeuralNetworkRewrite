@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -8,6 +9,7 @@ namespace NeuralNetworkRewrite2024
 {
     internal class Neuron
     {
+        //TODO: Fix properties so they can be serialized
         private List<double> dataIn;
         private List<Connector> dataOut;
         private Function activationFunction;
@@ -81,5 +83,6 @@ namespace NeuralNetworkRewrite2024
         {
             return lastPreactivationValue;
         }
+        
     }
 }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using MathNet.Numerics.LinearAlgebra;
@@ -14,6 +14,9 @@ namespace NeuralNetworkRewrite2024
         //Null if this is the last layer, as there is no next layer
         //Matrix of weights cannot be generated if last layer
         private Layer? nextLayer;
+        //Null if the network was constructed through training instead of from storage
+        internal double[][]? PresetWeights { get; set; }
+        internal bool FromStorage { get; set; }
         internal int size;
         Function activationFunction;
         double bias;
@@ -23,16 +26,38 @@ namespace NeuralNetworkRewrite2024
             this.size = size;
             this.bias = bias;
             neurons = new List<Neuron>();
-            PopulateNeurons(ref neurons, size);
+            PopulateNeurons();
         }
-        void PopulateNeurons(ref List<Neuron> neurons, int size)
+        //This constructor is for building a layer from a saved neural network
+        internal Layer(LayerMetadata metadata)
         {
-            for (int i = 0; i < size; i++)
-            {
-                Neuron neuron = new Neuron(activationFunction, bias);
-                neurons.Add(neuron);
-            }
+            PresetWeights = metadata.Weights;
+            FromStorage = true;
+            size = metadata.Size;
+            activationFunction = metadata.ActivationFunction;
+            bias = metadata.Bias;
+            neurons = new List<Neuron>();
+            PopulateNeurons();
 
+        }
+        void PopulateNeurons()
+        {
+            for (int i = 0; i < this.size; i++)
+            {
+                Neuron neuron = new Neuron(this.activationFunction, this.bias);
+                this.neurons.Add(neuron);
+            }
+        }
+        //This overload is for constructing from preknown weights
+        void PopulateNeurons(ref List<Neuron> neurons, int nextSize, double[,] weights)
+        {
+            for (int i = 0; i < this.size;  i++)
+            {
+                for (int k = 0; k < nextSize; k++)
+                {
+                    Neuron neuron = new Neuron(this.activationFunction, this.bias);
+                }
+            }
         }
         internal void RunNeurons()
         {
@@ -40,6 +65,10 @@ namespace NeuralNetworkRewrite2024
             {
                 neurons[i].RunNeuron();
             }
+        }
+        internal Function GetActivationFunction()
+        {
+            return activationFunction;
         }
         internal void RunNeurons(double input)
         {
@@ -94,7 +123,7 @@ namespace NeuralNetworkRewrite2024
             }
             return weightsMatrix;
         }
-        internal void ConnectLayer(Layer nextLayer) 
+        internal void ConnectLayer(Layer nextLayer)
         {
             this.nextLayer = nextLayer;
         }
@@ -113,6 +142,14 @@ namespace NeuralNetworkRewrite2024
                 }
             }
         }
+        internal int GetNextSize()
+        {
+            if (nextLayer is null)
+            {
+                return -1;
+            }
+            return nextLayer.GetSize();
+        }
         internal void ChangeBias(double bias)
         {
             this.bias = bias;
@@ -127,7 +164,7 @@ namespace NeuralNetworkRewrite2024
             Vector<double> results = Vector<double>.Build.Dense(size);
             for (int i = 0; i < size; i++)
             {
-                results[i] = this.GetNeuron(i).GetLastPreactivationValue(); 
+                results[i] = this.GetNeuron(i).GetLastPreactivationValue();
             }
             return results;
         }
@@ -139,6 +176,28 @@ namespace NeuralNetworkRewrite2024
                 results[i] = this.GetNeuron(i).GetLastValue();
             }
             return results;
+        }
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder();
+            int nextSize = -1;
+            if (nextLayer != null)
+            {
+                nextSize = nextLayer.GetSize();
+            }
+            //nextSize is -1 if last layer
+            sb.Append($"[{size},{nextSize},{bias},{activationFunction.ToString()},");
+            for (int i = 0; i < size; i++)
+            {
+                for (int k = 0; k < nextSize; k++)
+                {
+                    double currentWeight = GetNeuron(i).GetConnectorOut(k).GetWeight();
+                    sb.Append(currentWeight);
+                    sb.Append('|');
+                }
+            }
+            sb.Append(']');
+            return sb.ToString();
         }
     }
 }

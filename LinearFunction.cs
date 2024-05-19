@@ -2,16 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace NeuralNetworkRewrite2024
 {
-    internal class LinearFunction : Function
+    public class LinearFunction : Function
     {
         //y = mx + b
-        private double yIntercept;
-        private double slope; 
-        internal LinearFunction(double yIntercept, double slope)
+        public double yIntercept { get; set; }
+        public double slope { get; set; }
+        [JsonConstructor]
+        public LinearFunction(double yIntercept, double slope)
         {
             this.yIntercept = yIntercept;
             this.slope = slope;
@@ -24,6 +26,11 @@ namespace NeuralNetworkRewrite2024
         internal override double ComputeDerivative(double x)
         {
             return slope;
+        }
+        public override string ToString()
+        {
+            string s = this.GetType().ToString() + "|" + yIntercept + "|" + slope;
+            return s;
         }
     }
 }

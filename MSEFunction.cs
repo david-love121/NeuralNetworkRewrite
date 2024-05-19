@@ -9,13 +9,14 @@ using System.Threading.Tasks;
 namespace NeuralNetworkRewrite2024
 {
     //Mean square error function, one of my cost functions
-    internal class MSEFunction : Function
+    public class MSEFunction : Function
     {
         /// <summary>
         /// Returns the Mean Square Error based on the a - y supplied
         /// </summary>
         /// <param name="outputDifference"></param>
         /// <returns></returns>
+        public MSEFunction() { }
         internal override double Compute(double outputDifference)
         {
             double result = Math.Pow(outputDifference, 2);
@@ -47,6 +48,10 @@ namespace NeuralNetworkRewrite2024
             }
             return differenceVector;
         }
-        
+        public override string ToString()
+        {
+            return this.GetType().ToString();
+        }
+
     }
 }
