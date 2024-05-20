@@ -109,7 +109,7 @@ namespace NeuralNetworkRewrite2024
                         for (int k = 0; k < LastPreactivationValues.Count; k++)
                         {
                             //The last layer's del A del Z is the derivative of the mseFunction with the final a values plugged in
-                            double DelValue = mseFunction.ComputeDerivative(LastPreactivationValues[k]);
+                            double DelValue = lastLayer.GetActivationFunction().ComputeDerivative(LastPreactivationValues[k]);
                             delADelZ[k] = DelValue;
                         }
                         layerIndex = layerIndex - 1;

@@ -15,7 +15,7 @@ namespace NeuralNetworkRewrite2024
             driver.TestSerialization(path);
             
             double scoreEvo = driver.GetAverageScore();
-            driver.TrainBackpropagationBased(3, 10, 0.01);
+            driver.TrainBackpropagationBased(3, 10, 0.1);
             double scoreB = driver.GetAverageScore();
             
 
