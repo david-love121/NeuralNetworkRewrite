@@ -113,7 +113,7 @@ namespace NeuralNetworkRewrite2024
             {
                 throw new Exception("You cannot generate a weights matrix for the last layer.");
             }
-            Matrix<double> weightsMatrix = Matrix<double>.Build.Dense(nextLayer.GetSize(), size);
+            Matrix<double> weightsMatrix = Matrix<double>.Build.Dense(size, nextLayer.GetSize());
             for (int i = 0; i < size; i++)
             {
                 for (int k = 0; k < nextLayer.GetSize(); k++)

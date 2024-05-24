@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-
+using MathNet.Numerics.LinearAlgebra;
 namespace NeuralNetworkRewrite2024
 {
     internal class Neuron
@@ -59,6 +59,15 @@ namespace NeuralNetworkRewrite2024
         internal void AddConnectionOut(Connector connector)
         {
             dataOut.Add(connector);
+        }
+        internal Vector<double> GetConnectionsOut()
+        {
+            Vector<double> connections = Vector<double>.Build.Dense(dataOut.Count);
+            for (int i = 0; i < dataOut.Count; i++)
+            {
+                connections[i] = dataOut[i].GetWeight();
+            }
+            return connections;
         }
         internal double GetLastValue()
         {
