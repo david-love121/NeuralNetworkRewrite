@@ -68,7 +68,7 @@ namespace NeuralNetworkRewrite2024
                 neuralNetwork.RandomizeWeights();
                 
             }
-
+            neuralNetwork.SetWeightsToList(bestResult);
             return bestResult;
         }
         //Update to support multilayer
