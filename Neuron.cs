@@ -73,15 +73,19 @@ namespace NeuralNetworkRewrite2024
         {
             return lastValue;
         }
+        internal double GetBias()
+        {
+            return bias;
+        }
         internal void SetBias(double bias)
         {
             this.bias = bias;
         }
-        internal void RandomizeWeights()
+        internal void RandomizeWeights(double range)
         {
             for (int i = 0; i < dataOut.Count; i++)
             {
-                dataOut[i].RandomizeWeight();
+                dataOut[i].RandomizeWeight(range);
             }
         }
         internal Connector GetConnectorOut(int index)

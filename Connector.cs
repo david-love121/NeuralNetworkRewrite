@@ -23,10 +23,10 @@ namespace NeuralNetworkRewrite2024
         {
             secondNeuron.AddInput(value * weight);
         }
-        internal void RandomizeWeight()
+        internal void RandomizeWeight(double range)
         {
             Random random = ManagedRandom.getRandom();
-            weight = random.NextDouble()*4;
+            weight = random.NextDouble()*range;
         }
         internal double GetWeight()
         {

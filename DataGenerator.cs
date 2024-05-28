@@ -12,20 +12,20 @@ namespace NeuralNetworkRewrite2024
         private Function function;
         private int totalPoints;
         private double step;
-        public DataGenerator(Function function, int totalPoints, double step = 1) 
+        public DataGenerator(Function function, int totalPoints, double step = 1)
         {
             this.function = function;
             this.totalPoints = totalPoints;
             this.step = step;
             Data = new List<double>();
-            PopulateData(ref Data);
+            PopulateData();
         }
-        void PopulateData(ref List<double> dataList)
+        void PopulateData()
         {
             for (double i = 0; i < totalPoints; i += step)
             {
                 double y = function.Compute(i);
-                dataList.Add(y);
+                Data.Add(y);
             }
             return;
         }

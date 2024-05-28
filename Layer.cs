@@ -20,11 +20,13 @@ namespace NeuralNetworkRewrite2024
         internal int size;
         Function activationFunction;
         double bias;
-        internal Layer(int size, Function activationFunction, double bias = 1)
+        int LayerIndex { get; set; }
+        internal Layer(int size, Function activationFunction, int layerIndex, double bias = 1)
         {
             this.activationFunction = activationFunction;
             this.size = size;
             this.bias = bias;
+            LayerIndex = layerIndex;
             neurons = new List<Neuron>();
             PopulateNeurons();
         }
@@ -59,16 +61,16 @@ namespace NeuralNetworkRewrite2024
                 }
             }
         }
+        internal Function GetActivationFunction()
+        {
+            return activationFunction;
+        }
         internal void RunNeurons()
         {
             for (int i = 0; i < neurons.Count; i++)
             {
                 neurons[i].RunNeuron();
             }
-        }
-        internal Function GetActivationFunction()
-        {
-            return activationFunction;
         }
         internal void RunNeurons(double input)
         {
@@ -77,9 +79,30 @@ namespace NeuralNetworkRewrite2024
                 neurons[i].RunNeuron(input);
             }
         }
+        internal void RunNeurons(Vector<double> inputs)
+        {
+            if (inputs.Count != this.size)
+            {
+                throw new ArgumentException("Inputs doesn't match number of neurons!");
+            }
+            for (int i = 0; i < neurons.Count; i++)
+            {
+                neurons[i].RunNeuron(inputs[i]);
+            }
+        }
+        //Originally I only had one bias per layer, but this has changed, remove eventually
         internal double GetBias()
         {
             return bias;
+        }
+        internal Vector<double> GetBiasVector()
+        {
+            Vector<double> result = Vector<double>.Build.Dense(neurons.Count);
+            for (int i = 0; i < result.Count; i++)
+            {
+                result[i] = neurons[i].GetBias();
+            }
+            return result;
         }
         internal int GetSize()
         {
@@ -99,11 +122,11 @@ namespace NeuralNetworkRewrite2024
             }
             return output;
         }
-        internal void RandomizeWeights()
+        internal void RandomizeWeights(double range)
         {
             for (int i = 0; i < size; i++)
             {
-                this.GetNeuron(i).RandomizeWeights();
+                this.GetNeuron(i).RandomizeWeights(range);
             }
         }
         //Of format [NeuronIndex, nextNeuronIndex]
@@ -157,6 +180,17 @@ namespace NeuralNetworkRewrite2024
             for (int i = 0; i < neurons.Count; i++)
             {
                 neurons[i].SetBias(bias);
+            }
+        }
+        internal void ChangeBias(Vector<double> bias)
+        {
+            if (bias.Count !=  neurons.Count)
+            {
+                throw new ArgumentException("Dimensionality must match!");
+            }
+            for (int i = 0; i < neurons.Count; i++)
+            {
+                neurons[i].SetBias(bias[i]);
             }
         }
         internal Vector<double> GetPreactivationValues()

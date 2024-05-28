@@ -7,17 +7,19 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using MathNet.Numerics.LinearAlgebra;
 using System.Text.Json.Serialization;
+using System.Runtime.InteropServices.Marshalling;
 namespace NeuralNetworkRewrite2024
 {
     internal class NeuralNetwork
     {
         List<Layer> layers;
-        
+        internal bool Categorical { get; set; }
         //Including input and output layers
-        internal NeuralNetwork(int[] layerSizes, Function activationFunction, double bias = 1)
+        internal NeuralNetwork(int[] layerSizes, Function activationFunction, bool lastLayerNonlinearity, bool categorical, double bias = 1)
         {
+            Categorical = categorical;
             layers = new List<Layer>();
-            PopulateLayers(ref layers, layerSizes, activationFunction, bias);
+            PopulateLayers(ref layers, layerSizes, activationFunction, lastLayerNonlinearity, bias);
             ConnectNeuronsAndLayers();
         }
         //Construct from storage
@@ -31,11 +33,16 @@ namespace NeuralNetworkRewrite2024
             ConnectNeuronsAndLayers();
         }
         
-        static void PopulateLayers(ref List<Layer> layers, int[] layerSizes, Function activationFunction, double bias)
+        static void PopulateLayers(ref List<Layer> layers, int[] layerSizes, Function activationFunction, bool lastLayerNonlinearity, double bias)
         {
             for (int i = 0; i < layerSizes.Length; i++)
             {
-                Layer layer = new Layer(layerSizes[i], activationFunction, bias);
+                Layer layer = new Layer(layerSizes[i], activationFunction, i, bias);
+                if (!lastLayerNonlinearity && (i == layerSizes.Length - 1))
+                {
+                    layer = new Layer(layerSizes[i], new LinearFunction(0, 1), i, bias);
+                }
+                
                 layers.Add(layer);
             }
         }
@@ -70,23 +77,62 @@ namespace NeuralNetworkRewrite2024
             }
             Layer outputLayer = layers[layers.Count - 1];
             Vector<double> vectorizedOutput = outputLayer.OutputLayerAsVector();
+            if (Categorical)
+            {
+                //Converts to probability distribution for categorical problems
+                SoftmaxFunction softmaxFunction = new SoftmaxFunction();
+                vectorizedOutput = softmaxFunction.Compute(vectorizedOutput);
+            }
             return vectorizedOutput;
             
         }
-        internal double ScoreOutput(Vector<double> input, Vector<double> expectedOutput)
+        internal Vector<double> RunNetwork(Vector<double> inputs)
         {
+            layers[0].RunNeurons(inputs);
+            for (int i = 1; i < layers.Count; i++)
+            {
+                layers[i].RunNeurons();
+            }
+            Layer outputLayer = layers[layers.Count - 1];
+            Vector<double> vectorizedOutput = outputLayer.OutputLayerAsVector();
+            if (Categorical)
+            {
+                //Converts to probability distribution for categorical problems
+                SoftmaxFunction softmaxFunction = new SoftmaxFunction();
+                vectorizedOutput = softmaxFunction.Compute(vectorizedOutput);
+            }
+            return vectorizedOutput;
+
+        }
+        internal Vector<double> ScoreOutput(Vector<double> output, Vector<double> expectedOutput)
+        {
+            
+            if (Categorical)
+            {
+                if (output.Count != expectedOutput.Count)
+                {
+                    throw new ArgumentException("Vector dimensionality must match!");
+                }
+                //Todo: CHeck if negative log
+                //Getting value higher than 1 here, check
+                output = output.PointwiseLog();
+                output = -output.PointwiseMultiply(expectedOutput);
+                return output;
+            }
             MSEFunction mseFunction = new MSEFunction();
-            Vector<double> differenceVector = input - expectedOutput;
+            Vector<double> differenceVector = output - expectedOutput;
             Vector<double> MSEVector = mseFunction.Compute(differenceVector);
             double sum = MSEVector.Sum();
             double average = sum / MSEVector.Count;
-            return average;
+            Vector<double> outputVector = Vector<double>.Build.Dense(1, average);
+            return outputVector;
         }
-        internal void RandomizeWeights()
+
+        internal void RandomizeWeights(double range)
         {
             for (int i = 0; i < layers.Count; i++)
             {
-                layers[i].RandomizeWeights();   
+                layers[i].RandomizeWeights(range);   
             }
         }
         internal List<Matrix<double>> GetWeightsMatrixList()
@@ -108,6 +154,16 @@ namespace NeuralNetworkRewrite2024
             }
             return result;
         }
+        internal List<Vector<double>> GetBiasVectorList()
+        {
+            List<Vector<double>> result = new List<Vector<double>>();
+            for (int i = 0; i < layers.Count; i++)
+            {
+                Layer currentLayer = layers[i];
+                result.Add(currentLayer.GetBiasVector());
+            }
+            return result;
+        }
         internal void SetWeightsToList(List<Matrix<double>> list)
         {
             int total = list.Count;
@@ -120,11 +176,15 @@ namespace NeuralNetworkRewrite2024
             }
         }
         
-        internal void SetBiasToList(Vector<double> biases)
+        internal void SetBiasToList(List<Vector<double>> biases)
         {
-            for (int i = 0; i < biases.Count; i++)
+            for (int i = 0; i < layers.Count; i++)
             {
-                layers[i].ChangeBias(biases[i]);
+                Vector<double> currentChanges = biases[i];
+                for (int j = 0; j < currentChanges.Count; j++)
+                {
+                    layers[i].ChangeBias(currentChanges);
+                }
             }
         }
         internal Layer GetLayer(int index)
