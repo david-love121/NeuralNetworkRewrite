@@ -10,21 +10,20 @@ namespace NeuralNetworkRewrite2024
         {
             string lastNetworkPath = @"C:\Users\david\source\repos\NeuralNetworkRewrite\lastNetwork.txt";
             string irisDataPath = @"C:\Users\david\source\repos\NeuralNetworkRewrite\data\iris.data";
-            DataList dataList = new DataList(irisDataPath);
-            Function activationFunction = new LinearFunction(0, 1);
+
             Driver driver = new Driver();
-            List<Matrix<double>> bestWeights = driver.TrainEvolutionBased(1);
+            //List<Matrix<double>> bestWeights = driver.TrainEvolutionBased(10);
             
-            double scoreEvo = driver.GetAverageScore();
-            Console.WriteLine($"Evolution complete: Score {scoreEvo}");
-            driver.TrainBackpropagationBased(100, 10, 3);
-            double scoreB = driver.GetAverageScore();
-            Console.WriteLine($"Backprop pass 1 complete: Score {scoreB} | Delta: {scoreB - scoreEvo}");
-            driver.TrainBackpropagationBased(100, 10, 0.5);
-            double scoreB2 = driver.GetAverageScore();
-            Console.WriteLine($"Backprop pass 2 complete: Score {scoreB2} | Delta: {scoreB - scoreB2}");
+            double score = driver.GetAverageScore();
+            driver.TrainBackpropagationBased(400, 5, 0.1, 5);
+            double score2 = driver.GetAverageScore();
+            driver.TrainBackpropagationBased(400, 5, 2, 0.1);
+            double score3 = driver.GetAverageScore();
 
-
+            List<double> scores = driver.RunBackpropagationLoop(10, 400, 3, 0.1, 5);
+            driver.PrintOutput(0, 20);
+            int x = 2;
         }
+
     }
 }

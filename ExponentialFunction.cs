@@ -11,16 +11,40 @@ namespace NeuralNetworkRewrite2024
     {
         //y = b^x
         public double baseValue { get; set; }
+        public double? UpperBound { get; private set; }
+        public double? LowerBound { get; private set; }
         [JsonConstructor]
         public ExponentialFunction(double baseValue)
         {
             this.baseValue = baseValue;
         }
+        public ExponentialFunction(double baseValue, double lowerBound, double upperBound)
+        {
+            this.baseValue = baseValue;
+            this.LowerBound = lowerBound;
+            this.UpperBound = upperBound;
+        }
 
         internal override double Compute(double x)
         {
-            double result = Math.Pow(baseValue, x);
-            return result;
+            double result = Math.Pow(baseValue, x); 
+            if (UpperBound is not null && LowerBound is not null)
+            {
+                
+                if (result > UpperBound)
+                {
+                    return (double)UpperBound;
+                } else if (result < LowerBound)
+                {
+                    return (double)LowerBound;
+                } else
+                {
+                    return result;
+                }
+            } else
+            {
+                return result;
+            }
         }
 
         internal override double ComputeDerivative(double x)

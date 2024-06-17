@@ -18,6 +18,7 @@ namespace NeuralNetworkRewrite2024
                 //e^input
                 sum += Math.Exp(vect[i]);
             }
+            
             for (int i = 0; i < vect.Count; i++)
             {
                 outputs[i] = Math.Exp(vect[i]) / sum;

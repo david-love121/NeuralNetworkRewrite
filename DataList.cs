@@ -11,13 +11,15 @@ namespace NeuralNetworkRewrite2024
     {
         //For classification problems
         public List<DataContainer> data;
+        private static Random rng = new Random();
         readonly string[] classifications = ["Iris-setosa", "Iris-versicolor", "Iris-virginica"];
-        public DataList(string path)
+        public DataList(string path, int points)
         {
             data = new List<DataContainer>();
             StreamReader sr = new StreamReader(path);
             string? line = sr.ReadLine();
-            while (line != null)
+            int index = 0;
+            while (line != null && index < points)
             {
                 string[] dataArray = line.Split(','); 
                 double[] dataArrayDouble = new double[dataArray.Length - 1];
@@ -32,6 +34,7 @@ namespace NeuralNetworkRewrite2024
                 DataContainer container = new DataContainer(dataArrayDouble, classNumber, classifications.Length, classification);
                 data.Add(container);
                 line = sr.ReadLine();
+                index++;
 
             }
         }
@@ -45,5 +48,19 @@ namespace NeuralNetworkRewrite2024
         {
             return data.Count;
         }
+        public void Shuffle()
+        {
+            int n = this.data.Count;
+            while (n > 1)
+            {
+                n--;
+                int k = rng.Next(n + 1);
+                DataContainer value = data[k];
+                data[k] = data[n];
+                data[n] = value;
+            }
+        }
+
+
     }
 }

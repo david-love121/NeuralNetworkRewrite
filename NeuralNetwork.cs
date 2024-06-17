@@ -13,11 +13,13 @@ namespace NeuralNetworkRewrite2024
     internal class NeuralNetwork
     {
         List<Layer> layers;
+        private Random rand;
         internal bool Categorical { get; set; }
         //Including input and output layers
         internal NeuralNetwork(int[] layerSizes, Function activationFunction, bool lastLayerNonlinearity, bool categorical, double bias = 1)
         {
             Categorical = categorical;
+            rand = new Random();
             layers = new List<Layer>();
             PopulateLayers(ref layers, layerSizes, activationFunction, lastLayerNonlinearity, bias);
             ConnectNeuronsAndLayers();
@@ -48,6 +50,8 @@ namespace NeuralNetworkRewrite2024
         }
         void ConnectNeuronsAndLayers()
         {
+            int numInputs = layers[0].size;
+            int numOutputs = layers[^1].size;
             for (int i = 0; i < layers.Count - 1; i++)
             {
                 Layer selectedLayer = layers[i];
@@ -57,7 +61,7 @@ namespace NeuralNetworkRewrite2024
                 {
                     for (int j = 0; j < nextLayer.GetSize(); j++)
                     {
-                        double weight = 1;
+                        double weight = CalculateGloartUniformWeight(numInputs, numOutputs);
                         if (selectedLayer.FromStorage && selectedLayer.PresetWeights is not null)
                         {
                             weight = selectedLayer.PresetWeights[k][j];
@@ -67,6 +71,13 @@ namespace NeuralNetworkRewrite2024
                     }
                 }
             }
+        }
+        private double CalculateGloartUniformWeight(int numInputs, int numOutputs)
+        {
+            double multipler = (rand.NextDouble() * 2) - 1;
+            double x = 6.0 / (double)(numInputs + numOutputs);
+            x = Math.Sqrt(x);
+            return multipler * x;
         }
         internal Vector<double> RunNetwork(double input)
         {
@@ -99,6 +110,7 @@ namespace NeuralNetworkRewrite2024
             {
                 //Converts to probability distribution for categorical problems
                 SoftmaxFunction softmaxFunction = new SoftmaxFunction();
+                vectorizedOutput = Driver.ApplyClipping(vectorizedOutput, 500);
                 vectorizedOutput = softmaxFunction.Compute(vectorizedOutput);
             }
             return vectorizedOutput;
