@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NeuralNet2023;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,7 +12,6 @@ namespace NeuralNetworkRewrite2024
     {
         //For classification problems
         public List<DataContainer> data;
-        private static Random rng = new Random();
         readonly string[] classifications = ["Iris-setosa", "Iris-versicolor", "Iris-virginica"];
         public DataList(string path, int points)
         {
@@ -50,6 +50,7 @@ namespace NeuralNetworkRewrite2024
         }
         public void Shuffle()
         {
+            Random rng = ManagedRandom.getRandom();
             int n = this.data.Count;
             while (n > 1)
             {

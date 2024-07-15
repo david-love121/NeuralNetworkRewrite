@@ -14,13 +14,13 @@ namespace NeuralNetworkRewrite2024
             Driver driver = new Driver();
             //List<Matrix<double>> bestWeights = driver.TrainEvolutionBased(10);
             
-            double score = driver.GetAverageScore();
+            /**double score = driver.GetAverageScore();
             driver.TrainBackpropagationBased(400, 5, 0.1, 5);
             double score2 = driver.GetAverageScore();
             driver.TrainBackpropagationBased(400, 5, 2, 0.1);
-            double score3 = driver.GetAverageScore();
+            double score3 = driver.GetAverageScore();**/
 
-            List<double> scores = driver.RunBackpropagationLoop(10, 400, 3, 0.1, 5);
+            List<double> scores = driver.RunBackpropagationLoop(40, 100, 5, 0.1, 2);
             driver.PrintOutput(0, 20);
             int x = 2;
         }
