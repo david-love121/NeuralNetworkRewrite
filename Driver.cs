@@ -25,8 +25,8 @@ namespace NeuralNetworkRewrite2024
             this.activationFunction = new SigmoidFunction(2);
             dataFunction = new LinearFunction(2, 3);
             dataGenerator = new DataGenerator(dataFunction, 100, 1);
-            string irisDataPath = @"C:\Users\david\source\repos\NeuralNetworkRewrite\data\iris.data";
-            dataList = new DataList(irisDataPath, 150);
+            
+            dataList = new DataList("iris");
             bool categorical = true;
             if (categorical)
             {

@@ -21,6 +21,13 @@ namespace NeuralNetworkRewrite2024
             ClassificationString = classificationString;
             this.NumCategories = numCategories;
         }
+        public DataContainer(int sizeOfData, int classificationNumber, int numCategories, string classificationString)
+        {
+            Data = new double[sizeOfData];
+            ClassificationNumber = classificationNumber;
+            ClassificationString = classificationString;
+            this.NumCategories = numCategories;
+        }
         public override string ToString()
         {
             return ClassificationString;
