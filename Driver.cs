@@ -25,12 +25,14 @@ namespace NeuralNetworkRewrite2024
             this.activationFunction = new SigmoidFunction(2);
             dataFunction = new LinearFunction(2, 3);
             dataGenerator = new DataGenerator(dataFunction, 100, 1);
-            
-            dataList = new DataList("iris");
+            dataList = new DataList("fashion");
             bool categorical = true;
             if (categorical)
             {
-                layerSizes = [dataList.GetContainer(0).GetFeatures().Length, 4, 3, dataList.GetContainer(0).NumCategories];
+                int numInputs = dataList.GetTrainingContainer(0).GetFeatures().Length;
+                int numOutputs = dataList.GetTrainingContainer(0).NumCategories;
+                int sizeHidden = numInputs + (int)Math.Round(0.66 * numOutputs);
+                layerSizes = [dataList.GetTrainingContainer(0).GetFeatures().Length, sizeHidden, sizeHidden, dataList.GetTrainingContainer(0).NumCategories];
             } else
             {
                 layerSizes = [1, 3, 3, 1];
@@ -38,8 +40,6 @@ namespace NeuralNetworkRewrite2024
             neuralNetwork = new NeuralNetwork(layerSizes, activationFunction, false, categorical, 1);
             outputs = new List<double>();
             dataList.Shuffle();
-           
-
         }
         internal Matrix<double> GetScores(int totalPoints)
         {
@@ -52,11 +52,17 @@ namespace NeuralNetworkRewrite2024
             outputs.Clear();
             for (int i = 0; i < totalPoints; i += 1)
             {
-                
                 Vector<double> score;
                 if (neuralNetwork.Categorical)
                 {
-                    DataContainer dataContainer = dataList.GetContainer(i);
+                    DataContainer dataContainer;
+                    if (dataList.ValidationAvailable)
+                    {
+                        dataContainer = dataList.GetValidationContainer(i);
+                    } else
+                    {
+                         dataContainer = dataList.GetTrainingContainer(i);
+                    }
                     Vector<double> inputVector = Vector<double>.Build.DenseOfArray(dataContainer.GetFeatures());
                     Vector<double> outputVector = neuralNetwork.RunNetwork(inputVector);
                     Vector<double> oneHotCodedVector = Vector<double>.Build.Dense(dataContainer.GetOneHotCoded());
@@ -99,7 +105,14 @@ namespace NeuralNetworkRewrite2024
             int size;
             if (neuralNetwork.Categorical)
             {
-                size = dataList.GetSizeData();
+                if (dataList.ValidationAvailable)
+                {
+                    size = dataList.GetSizeValidationData();
+                }
+                else
+                {
+                    size = dataList.GetSizeTrainingData();
+                }
             } else 
             {
                 size = dataGenerator.GetSizeData();
@@ -141,14 +154,12 @@ namespace NeuralNetworkRewrite2024
             int totalPoints;
             if (neuralNetwork.Categorical)
             {
-                totalPoints = dataList.GetSizeData();
+                totalPoints = dataList.GetSizeTrainingData();
             }
             else
             {
                 totalPoints = dataGenerator.GetSizeData();
-
             }
-          
             int batchesPerTrainingCycle = totalPoints / batchSize;
             //Stores average batch changes, matrix represents the changes for a layer, inner list represents changes for a pass, outer list represents all passes
             List<List<Matrix<double>>> weightDerivativesL = new List<List<Matrix<double>>>();
@@ -164,7 +175,7 @@ namespace NeuralNetworkRewrite2024
                     biasDerivativeCollection.Clear();
                     for (int i = batchSize*b; i < batchSize*(b+1); i++)
                     {
-                        //a = func(z) z = y*w + b
+                        //a = func(z) | z = y*w + b
                         int layerIndex = layerSizes.Length - 1;
                         Layer lastLayer = neuralNetwork.GetLayer(layerIndex);
                         Vector<double> expectedOutput;
@@ -174,7 +185,7 @@ namespace NeuralNetworkRewrite2024
                         Vector<double> delCDelAVector;
                         if (neuralNetwork.Categorical)
                         {
-                            DataContainer dataContainer = dataList.GetContainer(i);
+                            DataContainer dataContainer = dataList.GetTrainingContainer(i);
                             expectedOutput = Vector<double>.Build.DenseOfArray(dataContainer.GetOneHotCoded());
                             Vector<double> inputVector = Vector<double>.Build.DenseOfArray(dataContainer.GetFeatures());
                             neuralNetworkOutput = neuralNetwork.RunNetwork(inputVector);
@@ -268,9 +279,8 @@ namespace NeuralNetworkRewrite2024
                     weightDerivativesL.Add(averageWeightDerivative);
                     biasDerivativesL.Add(averageBiasDerivative);
                 }
-                AdjustNetwork(learningRate, 100, weightDerivativesL, biasDerivativesL);
+                AdjustNetwork(learningRate, 5, weightDerivativesL, biasDerivativesL);
             }
-            
         }
         internal void Backpropagate(Vector<double> delCDelA, int layerIndex, int arrayIndex, ref List<Matrix<double>> wd, ref List<Vector<double>> bd)
         {
@@ -344,7 +354,6 @@ namespace NeuralNetworkRewrite2024
             List<Matrix<double>> weightChanges = new List<Matrix<double>>();
             List<Vector<double>> averageBiasDerivatives = CalculateAverageListVectorWithClipping(biasDerivatives, threshold);
             List<Vector<double>> biasChanges = new List<Vector<double>>();
-            //Weird conversion because this is single perceptron for now, will change
             for (int i = 0; i < averageWeightDerivatives.Count; i++)
             {
                 Matrix<double> changes;
@@ -372,7 +381,6 @@ namespace NeuralNetworkRewrite2024
             {
                 return vector;
             }
-            Console.WriteLine("Clipped, L2 " + L2);
             vector = vector.Multiply(threshold);
             vector = vector.Divide(L2);
             return vector;
@@ -530,7 +538,7 @@ namespace NeuralNetworkRewrite2024
                 int numCorrect = 0;
                 for (int i = start; i < stop; i++)
                 {
-                    DataContainer dc = dataList.GetContainer(i);
+                    DataContainer dc = dataList.GetTrainingContainer(i);
                     Vector<double> inputVector = Vector<double>.Build.DenseOfArray(dc.GetFeatures());
                     Vector<double> output = neuralNetwork.RunNetwork(inputVector);
                     Vector<double> hotCoded = Vector<double>.Build.DenseOfArray(dc.GetOneHotCoded());

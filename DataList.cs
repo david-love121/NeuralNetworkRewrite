@@ -15,16 +15,19 @@ namespace NeuralNetworkRewrite2024
         public List<DataContainer> data;
         //May be null, contains validation set seperate from data
         public List<DataContainer> validationData;
+        public bool ValidationAvailable { get; set; } 
         readonly string[] classifications = ["Iris-setosa", "Iris-versicolor", "Iris-virginica"];
         public DataList(string dataset)
         {
             if (dataset == "iris")
             {
                 InitializeIrisSet();
+                ValidationAvailable = false;
             }
             if (dataset == "fashion")
             {
                 InitializeFashionSet();
+                ValidationAvailable = true;
             }
         }
         private void InitializeFashionSet()
@@ -58,6 +61,7 @@ namespace NeuralNetworkRewrite2024
                 for (int i = 0; i < numImages; i++)
                 {
                     DataContainer dataContainer = new DataContainer((int)(numRows*numCol), -1, 10, "");
+                    //Not worrying about dimensionality, flattening 
                     for (int k = 0; k < numRows * numCol; k++)
                     {
                         byte data = imageReader.ReadByte();
@@ -121,14 +125,27 @@ namespace NeuralNetworkRewrite2024
 
             }
         }
-        public DataContainer GetContainer(int index)
+        public DataContainer GetTrainingContainer(int index)
         {
             DataContainer dc = data.ElementAt(index);
             return dc;
         }
-        public int GetSizeData()
+        public DataContainer GetValidationContainer(int index)
+        {
+            if (validationData.Count == 0)
+            {
+                throw new Exception("validation data is null!");
+            }
+            DataContainer dc = validationData.ElementAt(index);
+            return dc;
+        }
+        public int GetSizeTrainingData()
         {
             return data.Count;
+        }
+        public int GetSizeValidationData()
+        {
+            return validationData.Count;
         }
         public void Shuffle()
         {
